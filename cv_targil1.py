@@ -12,26 +12,6 @@ def initialize_grid(size):
     grid = np.random.choice([0, 1], size=(size, size))
     return grid
 
-
-# Step 2: Define Non-Deterministic Rules
-def apply_rules(grid):
-    """
-    Applies non-deterministic rules to the grid to encourage the formation of
-    alternating stripe patterns. Each cell's new state is determined by its
-    neighbors and some randomness.
-    """
-    new_grid = grid.copy()
-    for i in range(grid.shape[0]):
-        for j in range(grid.shape[1]):
-            neighbors = grid[i - 1:i + 2, j - 1:j + 2].sum() - grid[i, j]
-            if grid[i, j] == 1:
-                if neighbors < 2 or neighbors > 3:
-                    new_grid[i, j] = 0
-            else:
-                if neighbors == 3:
-                    new_grid[i, j] = 1
-    return new_grid
-
 # Step 2: Define Non-Deterministic Rules
 def update_cell(grid, x, y):
     """
@@ -39,25 +19,34 @@ def update_cell(grid, x, y):
     alternating stripe patterns. Each cell's new state is determined by its
     neighbors and some randomness.
     """
-    # Get the states of the 8 neighbors cyrcly
+    # Count horizontal neighbors (left and right)
     neighbors = [
-        grid[(x-1) % grid.shape[0], (y-1) % grid.shape[1]],
-        grid[(x-1) % grid.shape[0], y],
-        grid[(x-1) % grid.shape[0], (y+1) % grid.shape[1]],
-        grid[x, (y-1) % grid.shape[1]],
-        grid[x, (y+1) % grid.shape[1]],
-        grid[(x+1) % grid.shape[0], (y-1) % grid.shape[1]],
-        grid[(x+1) % grid.shape[0], y],
-        grid[(x+1) % grid.shape[0], (y+1) % grid.shape[1]]
+        grid[(x-1) % grid.shape[0], (y-1) % grid.shape[1]],  # Top-left
+        grid[(x-1) % grid.shape[0], (y+1) % grid.shape[1]],  # Top-right
+        grid[x, (y-1) % grid.shape[1]],                      # Left
+        grid[x, (y+1) % grid.shape[1]],                      # Right
+        grid[(x+1) % grid.shape[0], (y-1) % grid.shape[1]],  # Bottom-left
+        grid[(x+1) % grid.shape[0], (y+1) % grid.shape[1]]   # Bottom-right
     ]
     
-    # Rule: Prefer alternating pattern based on majority of neighbors
-    if neighbors.count(1) > neighbors.count(0):
+    # Rule: Prefer alternating pattern based on majority of horizontal neighbors
+    if neighbors.count(1) > neighbors.count(0): # most of the neighbors is 1 - be 0
         return 0
-    elif neighbors.count(0) > neighbors.count(1):
+    elif neighbors.count(0) > neighbors.count(1): # most of the neighbors is 0 - be 1
         return 1
     else:
-        return np.random.choice([0, 1])
+        # Count vertical neighbors
+        neighbors = [
+        grid[(x-1) % grid.shape[0], y],                      # Top
+        grid[(x+1) % grid.shape[0], y],                      # Bottom
+        ]
+
+        if neighbors.count(1) > neighbors.count(0): # most of the colum is 1 - be 1
+            return 1
+        elif neighbors.count(0) > neighbors.count(1): # most of the colum is 0 - be 0
+            return 0
+        # else: return 0 # top differeent from bottom
+        else: return np.random.choice([0, 1]) # top differeent from bottom
 
 
 def update_grid(grid):
@@ -143,7 +132,7 @@ if __name__ == "__main__":
     # root.mainloop()
 
     # Matplotlib progress plot
-    generations = 5
+    generations = 150
     runs = 1
     # progress = run_simulation(grid_size, generations, runs)
     run_simulation(grid_size, generations, runs)
