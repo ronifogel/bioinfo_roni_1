@@ -3,10 +3,6 @@
 import numpy as np
 import tkinter as tk
 
-from tkinter import Canvas
-import time
-
-
 # Step 1: Initialize the Grid
 def initialize_grid(size):
     """
@@ -36,98 +32,114 @@ def apply_rules(grid):
                     new_grid[i, j] = 1
     return new_grid
 
-# Draw the grid using tkinter
-def draw_grid(canvas, grid, rects, cell_size):
-    for i in range(grid.shape[0]):
-        for j in range(grid.shape[1]):
-            color = "black" if grid[i, j] == 1 else "white"
-            canvas.itemconfig(rects[i][j], fill=color)
+# Step 2: Define Non-Deterministic Rules
+def update_cell(grid, x, y):
+    # Get the states of the 8 neighbors
+    neighbors = [
+        grid[(x-1) % grid.shape[0], (y-1) % grid.shape[1]],
+        grid[(x-1) % grid.shape[0], y],
+        grid[(x-1) % grid.shape[0], (y+1) % grid.shape[1]],
+        grid[x, (y-1) % grid.shape[1]],
+        grid[x, (y+1) % grid.shape[1]],
+        grid[(x+1) % grid.shape[0], (y-1) % grid.shape[1]],
+        grid[(x+1) % grid.shape[0], y],
+        grid[(x+1) % grid.shape[0], (y+1) % grid.shape[1]]
+    ]
+    
+    # Rule: Prefer alternating pattern based on majority of neighbors
+    if neighbors.count(1) > neighbors.count(0):
+        return 0
+    elif neighbors.count(0) > neighbors.count(1):
+        return 1
+    else:
+        return np.random.choice([0, 1])
 
-# Run the automaton and visualize with tkinter
-def run_automaton(initial_grid, generations, cell_size=10, delay=100):
-    grid = initial_grid
+
+def update_grid(grid):
+    new_grid = grid.copy()
+    for x in range(grid.shape[0]):
+        for y in range(grid.shape[1]):
+            new_grid[x, y] = update_cell(grid, x, y)
+    return new_grid
+
+
+# Step 4: Visualize the Progress with Tkinter
+class CellularAutomatonVisualizer:
+    def __init__(self, root, grid_size):
+        self.root = root
+        self.grid_size = grid_size
+        self.grid = initialize_grid(grid_size)
+        self.canvas = tk.Canvas(root, width=grid_size*10, height=grid_size*10)
+        self.canvas.pack()
+        self.draw_grid()
+
+    def update(self):
+        self.grid = update_grid(self.grid)
+        self.draw_grid()
+        self.root.after(1000, self.update)  # Update every 100ms
+    
+    def draw_grid(self):
+        self.canvas.delete("all")
+        for x in range(self.grid_size):
+            for y in range(self.grid_size):
+                color = "black" if self.grid[x, y] == 1 else "white"
+                self.canvas.create_rectangle(y*10, x*10, (y+1)*10, (x+1)*10, fill=color)
+
+
+# Step 5: Plot the Progress Over Generations
+def run_simulation(grid_size, generations, runs):
     root = tk.Tk()
-    canvas = tk.Canvas(root, width=grid_size * cell_size, height=grid_size * cell_size)
-    canvas.pack()
-
-    rects = [[canvas.create_rectangle(j * cell_size, i * cell_size,
-                                      (j + 1) * cell_size, (i + 1) * cell_size,
-                                      fill="white", outline="gray")
-              for j in range(grid_size)] for i in range(grid_size)]
-
-    def update():
-        nonlocal grid
-        grid = apply_rules(grid)
-        draw_grid(canvas, grid, rects, cell_size)
-        root.after(delay, update)
-
-    root.after(delay, update)
+    visualizer = CellularAutomatonVisualizer(root, grid_size)
+    def run_generations(gen):
+        if gen < generations:
+            print(gen)
+            visualizer.update()
+            root.after(100, run_generations, gen+1)
+        else:
+            root.destroy()
+    
+    run_generations(0)
+    # for _ in range(generations):
+    #         # grid = update_grid(grid)
+    #         visualizer.update()
     root.mainloop()
 
-# Parameters
-grid_size = 80
-generations = 250
-cell_size = 5
-delay = 100  # milliseconds
 
-# Initialize grid and run the automaton
-initial_grid = initialize_grid(grid_size)
-run_automaton(initial_grid, generations, cell_size, delay)
+    # progress = []
 
-# # Step 3: Measure Pattern Formation
-# def measure_pattern(grid):
-#     """
-#     Measures how close the grid is to the ideal alternating stripe pattern.
-#     The score is the proportion of columns that match the desired pattern.
-#     """
-#     size = grid.shape[0]
-#     score = 0
-#     for j in range(size):
-#         col = grid[:, j]
-#         if np.all(col[::2] == 1) and np.all(col[1::2] == 0):
-#             score += 1
-#         elif np.all(col[::2] == 0) and np.all(col[1::2] == 1):
-#             score += 1
-#     return score / size
+    # for _ in range(runs):
+    #     grid = initialize_grid(grid_size)
+    #     run_progress = []
 
+    #     for _ in range(generations):
+    #         grid = update_grid(grid)
+    #         score = measure_pattern(grid)
+    #         run_progress.append(score)
 
+    #     progress.append(run_progress)
 
+    # return progress
 
-# # Step 4: Simulate Generations with Animation
-# def update(frame, grid, img, scores):
-#     """
-#     Update function for the animation that applies rules to the grid,
-#     measures the pattern, and updates the image.
-#     """
-#     new_grid = apply_rules(grid)
-#     score = measure_pattern(new_grid)
-#     scores.append(score)
-#     img.set_data(new_grid)
-#     ax.set_title(f"Generation {frame}")
-#     grid[:] = new_grid  # Update grid in place
-#     return [img]
-#
-#
-# # Main Execution
-# if __name__ == "__main__":
-#     size = 80
-#     generations = 250
-#     runs = 1
-#
-#     # Initialize the grid
-#     grid = initialize_grid(size)
-#     scores = []
-#
-#     # Prepare the figure and axis
-#     fig, ax = plt.subplots()
-#     img = ax.imshow(grid, interpolation='nearest')
-#     ax.set_title("Generation 0")
-#
-#     # Animation function
-#     ani = FuncAnimation(
-#         fig, update, fargs=(grid, img, scores), frames=10, interval=500,
-#                                   save_count=50
-#     )
-#
-#     # Show the animation
-#     plt.show()
+if __name__ == "__main__":
+    # Tkinter visualization
+    # root = tk.Tk()
+    grid_size = 80
+    # visualizer = CellularAutomatonVisualizer(root, grid_size)
+    # visualizer.update()
+    # root.mainloop()
+
+    # Matplotlib progress plot
+    generations = 5
+    runs = 1
+    # progress = run_simulation(grid_size, generations, runs)
+    run_simulation(grid_size, generations, runs)
+
+    # Average progress across runs
+    # avg_progress = np.mean(progress, axis=0)
+
+    # plt.plot(range(generations), avg_progress)
+    # plt.xlabel('Generation')
+    # plt.ylabel('Stripe Score')
+    # plt.title('Progress of Cellular Automaton')
+    # plt.show()
+
