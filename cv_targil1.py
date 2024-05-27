@@ -34,7 +34,12 @@ def apply_rules(grid):
 
 # Step 2: Define Non-Deterministic Rules
 def update_cell(grid, x, y):
-    # Get the states of the 8 neighbors
+    """
+    Applies non-deterministic rules to the cell to encourage the formation of
+    alternating stripe patterns. Each cell's new state is determined by its
+    neighbors and some randomness.
+    """
+    # Get the states of the 8 neighbors cyrcly
     neighbors = [
         grid[(x-1) % grid.shape[0], (y-1) % grid.shape[1]],
         grid[(x-1) % grid.shape[0], y],
@@ -56,6 +61,10 @@ def update_cell(grid, x, y):
 
 
 def update_grid(grid):
+    """
+    Applies non-deterministic rules to the update the cells grid to encourage the formation of
+    alternating stripe patterns.
+    """
     new_grid = grid.copy()
     for x in range(grid.shape[0]):
         for y in range(grid.shape[1]):
@@ -65,21 +74,27 @@ def update_grid(grid):
 
 # Step 4: Visualize the Progress with Tkinter
 class CellularAutomatonVisualizer:
+    """
+    Class to present the cellular automaton visualizer
+    """
+    # constractor of the cellular automaton visualizer
     def __init__(self, root, grid_size):
         self.root = root
         self.grid_size = grid_size
-        self.grid = initialize_grid(grid_size)
+        self.grid = initialize_grid(grid_size) # initialize the cells grid random
         self.canvas = tk.Canvas(root, width=grid_size*10, height=grid_size*10)
         self.canvas.pack()
-        self.draw_grid()
+        self.draw_grid() # present the first random generation
 
+    # update the generation of the cellular automaton visualizer
     def update(self):
         self.grid = update_grid(self.grid)
         self.draw_grid()
-        self.root.after(1000, self.update)  # Update every 100ms
+        # self.root.after(1000, self.update)  # Update every 1000ms
     
+    # present the cellular automaton visualizer grid
     def draw_grid(self):
-        self.canvas.delete("all")
+        self.canvas.delete("all") # delete the last generation
         for x in range(self.grid_size):
             for y in range(self.grid_size):
                 color = "black" if self.grid[x, y] == 1 else "white"
@@ -88,22 +103,21 @@ class CellularAutomatonVisualizer:
 
 # Step 5: Plot the Progress Over Generations
 def run_simulation(grid_size, generations, runs):
+    """
+    Applies the simulation of the cellular automaton visualizer grid for 250 generations.
+    """
     root = tk.Tk()
-    visualizer = CellularAutomatonVisualizer(root, grid_size)
+    visualizer = CellularAutomatonVisualizer(root, grid_size) # initialize the cellular automaton visualizer
     def run_generations(gen):
         if gen < generations:
             print(gen)
-            visualizer.update()
-            root.after(100, run_generations, gen+1)
+            visualizer.update() # update the next generation
+            root.after(100, run_generations, gen+1) # Update every 100ms
         else:
             root.destroy()
     
-    run_generations(0)
-    # for _ in range(generations):
-    #         # grid = update_grid(grid)
-    #         visualizer.update()
+    run_generations(0) # start run_generation loop
     root.mainloop()
-
 
     # progress = []
 
