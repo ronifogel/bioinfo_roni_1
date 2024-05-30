@@ -77,9 +77,6 @@ def measure_pattern(grid):
     # Normalize the total score by the maximum possible score
     max_score = grid.shape[0] * (grid.shape[1] - 1)  # Each row has size-1 pairs, perfect score = 1
     normalized_score = total_score / max_score
-    # print(total_score / 80)
-    print(normalized_score)
-    # print(max_score)
     return normalized_score
 
 # Step 4: Visualize the Progress with Tkinter
@@ -111,7 +108,7 @@ class CellularAutomatonVisualizer:
 
 
 # Step 5: Plot the Progress Over Generations
-def run_simulation(grid_size, generations, runs):
+def run_simulation(grid_size, generations):
     """
     Applies the simulation of the cellular automaton visualizer grid for 250 generations.
     """
@@ -121,7 +118,6 @@ def run_simulation(grid_size, generations, runs):
 
     def run_generations(gen):
         if gen < generations:
-            print(gen)
             visualizer.update() # update the next generation
             score = measure_pattern(visualizer.grid)
             pattern_scores.append(score)
@@ -133,41 +129,23 @@ def run_simulation(grid_size, generations, runs):
     root.mainloop()
     return pattern_scores
 
-    # progress = []
-
-    # for _ in range(runs):
-    #     grid = initialize_grid(grid_size)
-    #     run_progress = []
-
-    #     for _ in range(generations):
-    #         grid = update_grid(grid)
-    #         score = measure_pattern(grid)
-    #         run_progress.append(score)
-
-    #     progress.append(run_progress)
-
-    # return progress
-
 if __name__ == "__main__":
     grid_size = 80
-    generations = 200
-    runs = 1
-    # progress = run_simulation(grid_size, generations, runs)
-    pattern_scores = run_simulation(grid_size, generations, runs)
+    generations = 250
+    runs = 10
+    all_pattern_scores = []
 
-    # Plot the progress over generations
-    plt.plot(range(generations), pattern_scores)
+    # Run multiple simulations and save the pattern scores for each run
+    for _ in range(runs):
+        pattern_scores = run_simulation(grid_size, generations)
+        all_pattern_scores.append(pattern_scores)
+
+    # Plot the progress over generations for each run
+    for i, pattern_scores in enumerate(all_pattern_scores):
+        plt.plot(range(generations), pattern_scores, label=f'Run {i+1}')
+
     plt.xlabel('Generation')
     plt.ylabel('Stripe Score')
     plt.title('Progress of Cellular Automaton')
+    plt.legend()
     plt.show()
-
-    # Average progress across runs
-    # avg_progress = np.mean(progress, axis=0)
-
-    # plt.plot(range(generations), avg_progress)
-    # plt.xlabel('Generation')
-    # plt.ylabel('Stripe Score')
-    # plt.title('Progress of Cellular Automaton')
-    # plt.show()
-
