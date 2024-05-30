@@ -2,6 +2,7 @@
 
 import numpy as np
 import tkinter as tk
+import matplotlib.pyplot as plt
 
 # Step 1: Initialize the Grid
 def initialize_grid(size):
@@ -60,6 +61,26 @@ def update_grid(grid):
             new_grid[x, y] = update_cell(grid, x, y)
     return new_grid
 
+# Step 3: Define the Measurement Metric
+def measure_pattern(grid):
+    """
+    Measures how close the rows is to an alternating pattern (either starting with 1 or 0).
+    The more balanced the sums, the lower the difference, indicating a better stripe pattern.
+    """
+    total_score = 0
+    for x in range(grid.shape[0]):  # Iterate over each row
+        row = grid[x, :]  # All column elements in row x
+        # Count the number of consecutive elements that are different
+        row_score = np.sum(row[:-1] != row[1:]) # Compare indexes between row[0:n-1] to row[1:n]
+        total_score += row_score # Increment the total score by the row score
+    
+    # Normalize the total score by the maximum possible score
+    max_score = grid.shape[0] * (grid.shape[1] - 1)  # Each row has size-1 pairs, perfect score = 1
+    normalized_score = total_score / max_score
+    # print(total_score / 80)
+    print(normalized_score)
+    # print(max_score)
+    return normalized_score
 
 # Step 4: Visualize the Progress with Tkinter
 class CellularAutomatonVisualizer:
@@ -79,7 +100,6 @@ class CellularAutomatonVisualizer:
     def update(self):
         self.grid = update_grid(self.grid)
         self.draw_grid()
-        # self.root.after(1000, self.update)  # Update every 1000ms
     
     # present the cellular automaton visualizer grid
     def draw_grid(self):
@@ -97,16 +117,21 @@ def run_simulation(grid_size, generations, runs):
     """
     root = tk.Tk()
     visualizer = CellularAutomatonVisualizer(root, grid_size) # initialize the cellular automaton visualizer
+    pattern_scores = []
+
     def run_generations(gen):
         if gen < generations:
             print(gen)
             visualizer.update() # update the next generation
+            score = measure_pattern(visualizer.grid)
+            pattern_scores.append(score)
             root.after(100, run_generations, gen+1) # Update every 100ms
         else:
             root.destroy()
     
     run_generations(0) # start run_generation loop
     root.mainloop()
+    return pattern_scores
 
     # progress = []
 
@@ -124,18 +149,18 @@ def run_simulation(grid_size, generations, runs):
     # return progress
 
 if __name__ == "__main__":
-    # Tkinter visualization
-    # root = tk.Tk()
     grid_size = 80
-    # visualizer = CellularAutomatonVisualizer(root, grid_size)
-    # visualizer.update()
-    # root.mainloop()
-
-    # Matplotlib progress plot
-    generations = 150
+    generations = 200
     runs = 1
     # progress = run_simulation(grid_size, generations, runs)
-    run_simulation(grid_size, generations, runs)
+    pattern_scores = run_simulation(grid_size, generations, runs)
+
+    # Plot the progress over generations
+    plt.plot(range(generations), pattern_scores)
+    plt.xlabel('Generation')
+    plt.ylabel('Stripe Score')
+    plt.title('Progress of Cellular Automaton')
+    plt.show()
 
     # Average progress across runs
     # avg_progress = np.mean(progress, axis=0)
