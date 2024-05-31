@@ -4,7 +4,7 @@ import numpy as np
 import tkinter as tk
 import matplotlib.pyplot as plt
 
-# Step 1: Initialize the Grid
+# Initialize the Grid
 def initialize_grid(size):
     """
     Initializes 80x80 grid with 50% of cells randomly assigned to 0 (black)
@@ -13,7 +13,7 @@ def initialize_grid(size):
     grid = np.random.choice([0, 1], size=(size, size))
     return grid
 
-# Step 2: Define Non-Deterministic Rules
+# Define Non-Deterministic Rules
 def update_cell(grid, x, y):
     """
     Applies non-deterministic rules to the cell to encourage the formation of
@@ -61,25 +61,38 @@ def update_grid(grid):
             new_grid[x, y] = update_cell(grid, x, y)
     return new_grid
 
-# Step 3: Define the Measurement Metric
+# Define the Measurement Metric
 def measure_pattern(grid):
     """
     Measures how close the rows is to an alternating pattern (either starting with 1 or 0).
-    The more balanced the sums, the lower the difference, indicating a better stripe pattern.
+    Both within rows and between consecutive rows.
     """
     total_score = 0
-    for x in range(grid.shape[0]):  # Iterate over each row
-        row = grid[x, :]  # All column elements in row x
-        # Count the number of consecutive elements that are different
+    row_count = grid.shape[0]
+    col_count = grid.shape[1]
+
+    # Measure alternating pattern within rows
+    for x in range(row_count): # Iterate over each row
+        row = grid[x, :]
+        # Count the number of consecutive elements that are different within the row
         row_score = np.sum(row[:-1] != row[1:]) # Compare indexes between row[0:n-1] to row[1:n]
-        total_score += row_score # Increment the total score by the row score
-    
+        total_score += row_score
+    # Measure similar pattern between pairs of consecutive rows
+    for x in range(row_count - 1):
+        row1 = grid[x, :]
+        row2 = grid[x + 1, :]
+        # Count the number of elements that are the same between consecutive rows
+        row_score = np.sum(row1 == row2)
+        total_score += row_score
+
     # Normalize the total score by the maximum possible score
-    max_score = grid.shape[0] * (grid.shape[1] - 1)  # Each row has size-1 pairs, perfect score = 1
-    normalized_score = total_score / max_score
+    max_score_within_rows = row_count * (col_count - 1) # the maximum score of within rows, each row has size-1 pairs
+    max_score_between_rows = (row_count - 1) * col_count # the maximum score of between rows, each colum has size-1 pairs
+    max_score = max_score_within_rows + max_score_between_rows
+    normalized_score = total_score / max_score # Perfect score = 1
     return normalized_score
 
-# Step 4: Visualize the Progress with Tkinter
+# Visualize the Progress with Tkinter
 class CellularAutomatonVisualizer:
     """
     Class to present the cellular automaton visualizer
@@ -107,14 +120,14 @@ class CellularAutomatonVisualizer:
                 self.canvas.create_rectangle(y*10, x*10, (y+1)*10, (x+1)*10, fill=color)
 
 
-# Step 5: Plot the Progress Over Generations
+# Run and measure the progress Over Generations
 def run_simulation(grid_size, generations):
     """
     Applies the simulation of the cellular automaton visualizer grid for 250 generations.
     """
     root = tk.Tk()
     visualizer = CellularAutomatonVisualizer(root, grid_size) # initialize the cellular automaton visualizer
-    pattern_scores = []
+    pattern_scores = [] # for saving each generation score
 
     def run_generations(gen):
         if gen < generations:
@@ -129,6 +142,7 @@ def run_simulation(grid_size, generations):
     root.mainloop()
     return pattern_scores
 
+# Run all the simulations and plot thier progress
 if __name__ == "__main__":
     grid_size = 80
     generations = 250
