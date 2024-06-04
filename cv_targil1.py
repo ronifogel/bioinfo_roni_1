@@ -4,6 +4,7 @@ import numpy as np
 import tkinter as tk
 import matplotlib.pyplot as plt
 
+
 # Initialize the Grid
 def initialize_grid(size):
     """
@@ -12,6 +13,7 @@ def initialize_grid(size):
     """
     grid = np.random.choice([0, 1], size=(size, size))
     return grid
+
 
 # Define Non-Deterministic Rules
 def update_cell(grid, x, y):
@@ -22,32 +24,33 @@ def update_cell(grid, x, y):
     """
     # Count horizontal neighbors (left and right)
     neighbors = [
-        grid[(x-1) % grid.shape[0], (y-1) % grid.shape[1]],  # Top-left
-        grid[(x-1) % grid.shape[0], (y+1) % grid.shape[1]],  # Top-right
-        grid[x, (y-1) % grid.shape[1]],                      # Left
-        grid[x, (y+1) % grid.shape[1]],                      # Right
-        grid[(x+1) % grid.shape[0], (y-1) % grid.shape[1]],  # Bottom-left
-        grid[(x+1) % grid.shape[0], (y+1) % grid.shape[1]]   # Bottom-right
+        grid[(x - 1) % grid.shape[0], (y - 1) % grid.shape[1]],  # Top-left
+        grid[(x - 1) % grid.shape[0], (y + 1) % grid.shape[1]],  # Top-right
+        grid[x, (y - 1) % grid.shape[1]],  # Left
+        grid[x, (y + 1) % grid.shape[1]],  # Right
+        grid[(x + 1) % grid.shape[0], (y - 1) % grid.shape[1]],  # Bottom-left
+        grid[(x + 1) % grid.shape[0], (y + 1) % grid.shape[1]]  # Bottom-right
     ]
-    
+
     # Rule: Prefer alternating pattern based on majority of horizontal neighbors
-    if neighbors.count(1) > neighbors.count(0): # most of the neighbors is 1 - be 0
+    if neighbors.count(1) > neighbors.count(0):  # most of the neighbors is 1 - be 0
         return 0
-    elif neighbors.count(0) > neighbors.count(1): # most of the neighbors is 0 - be 1
+    elif neighbors.count(0) > neighbors.count(1):  # most of the neighbors is 0 - be 1
         return 1
     else:
         # Count vertical neighbors
         neighbors = [
-        grid[(x-1) % grid.shape[0], y],                      # Top
-        grid[(x+1) % grid.shape[0], y],                      # Bottom
+            grid[(x - 1) % grid.shape[0], y],  # Top
+            grid[(x + 1) % grid.shape[0], y],  # Bottom
         ]
 
-        if neighbors.count(1) > neighbors.count(0): # most of the colum is 1 - be 1
+        if neighbors.count(1) > neighbors.count(0):  # most of the colum is 1 - be 1
             return 1
-        elif neighbors.count(0) > neighbors.count(1): # most of the colum is 0 - be 0
+        elif neighbors.count(0) > neighbors.count(1):  # most of the colum is 0 - be 0
             return 0
         # else: return 0 # top differeent from bottom
-        else: return np.random.choice([0, 1]) # top differeent from bottom
+        else:
+            return np.random.choice([0, 1])  # top differeent from bottom
 
 
 def update_grid(grid):
@@ -61,6 +64,7 @@ def update_grid(grid):
             new_grid[x, y] = update_cell(grid, x, y)
     return new_grid
 
+
 # Define the Measurement Metric
 def measure_pattern(grid):
     """
@@ -72,10 +76,10 @@ def measure_pattern(grid):
     col_count = grid.shape[1]
 
     # Measure alternating pattern within rows
-    for x in range(row_count): # Iterate over each row
+    for x in range(row_count):  # Iterate over each row
         row = grid[x, :]
         # Count the number of consecutive elements that are different within the row
-        row_score = np.sum(row[:-1] != row[1:]) # Compare indexes between row[0:n-1] to row[1:n]
+        row_score = np.sum(row[:-1] != row[1:])  # Compare indexes between row[0:n-1] to row[1:n]
         total_score += row_score
     # Measure similar pattern between pairs of consecutive rows
     for x in range(row_count - 1):
@@ -86,38 +90,41 @@ def measure_pattern(grid):
         total_score += row_score
 
     # Normalize the total score by the maximum possible score
-    max_score_within_rows = row_count * (col_count - 1) # the maximum score of within rows, each row has size-1 pairs
-    max_score_between_rows = (row_count - 1) * col_count # the maximum score of between rows, each colum has size-1 pairs
+    max_score_within_rows = row_count * (col_count - 1)  # the maximum score of within rows, each row has size-1 pairs
+    max_score_between_rows = (
+                                         row_count - 1) * col_count  # the maximum score of between rows, each colum has size-1 pairs
     max_score = max_score_within_rows + max_score_between_rows
-    normalized_score = total_score / max_score # Perfect score = 1
+    normalized_score = total_score / max_score  # Perfect score = 1
     return normalized_score
+
 
 # Visualize the Progress with Tkinter
 class CellularAutomatonVisualizer:
     """
     Class to present the cellular automaton visualizer
     """
+
     # constractor of the cellular automaton visualizer
     def __init__(self, root, grid_size):
         self.root = root
         self.grid_size = grid_size
-        self.grid = initialize_grid(grid_size) # initialize the cells grid random
-        self.canvas = tk.Canvas(root, width=grid_size*10, height=grid_size*10)
+        self.grid = initialize_grid(grid_size)  # initialize the cells grid random
+        self.canvas = tk.Canvas(root, width=grid_size * 10, height=grid_size * 10)
         self.canvas.pack()
-        self.draw_grid() # present the first random generation
+        self.draw_grid()  # present the first random generation
 
     # update the generation of the cellular automaton visualizer
     def update(self):
         self.grid = update_grid(self.grid)
         self.draw_grid()
-    
+
     # present the cellular automaton visualizer grid
     def draw_grid(self):
-        self.canvas.delete("all") # delete the last generation
+        self.canvas.delete("all")  # delete the last generation
         for x in range(self.grid_size):
             for y in range(self.grid_size):
                 color = "black" if self.grid[x, y] == 1 else "white"
-                self.canvas.create_rectangle(y*10, x*10, (y+1)*10, (x+1)*10, fill=color)
+                self.canvas.create_rectangle(y * 10, x * 10, (y + 1) * 10, (x + 1) * 10, fill=color)
 
 
 # Run and measure the progress Over Generations
@@ -126,21 +133,22 @@ def run_simulation(grid_size, generations):
     Applies the simulation of the cellular automaton visualizer grid for 250 generations.
     """
     root = tk.Tk()
-    visualizer = CellularAutomatonVisualizer(root, grid_size) # initialize the cellular automaton visualizer
-    pattern_scores = [] # for saving each generation score
+    visualizer = CellularAutomatonVisualizer(root, grid_size)  # initialize the cellular automaton visualizer
+    pattern_scores = []  # for saving each generation score
 
     def run_generations(gen):
         if gen < generations:
-            visualizer.update() # update the next generation
+            visualizer.update()  # update the next generation
             score = measure_pattern(visualizer.grid)
             pattern_scores.append(score)
-            root.after(100, run_generations, gen+1) # Update every 100ms
+            root.after(100, run_generations, gen + 1)  # Update every 100ms
         else:
             root.destroy()
-    
-    run_generations(0) # start run_generation loop
+
+    run_generations(0)  # start run_generation loop
     root.mainloop()
     return pattern_scores
+
 
 # Run all the simulations and plot thier progress
 if __name__ == "__main__":
@@ -156,7 +164,7 @@ if __name__ == "__main__":
 
     # Plot the progress over generations for each run
     for i, pattern_scores in enumerate(all_pattern_scores):
-        plt.plot(range(generations), pattern_scores, label=f'Run {i+1}')
+        plt.plot(range(generations), pattern_scores, label=f'Run {i + 1}')
 
     plt.xlabel('Generation')
     plt.ylabel('Stripe Score')
